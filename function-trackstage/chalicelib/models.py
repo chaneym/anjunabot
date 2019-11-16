@@ -9,6 +9,7 @@ class MessageStage(Base):
 
     id = Column(Integer, primary_key=True)
     path = Column(String)
+    path_type = Column(String)
     person = Column(String)
     comment = Column(String)
     chat_id = Column(String)

@@ -30,6 +30,6 @@ def get_person(first_name):
     return get_or_create(first_name)
 
 
-def message_stage(path, platform, person, comment, chat_id, chat_title):
-    return get_or_create(MessageStage, path=path, platform=platform, person=person, comment=comment, chat_id=chat_id,
-                         chat_title=chat_title)
+def message_stage(path, path_type, platform, person, comment, chat_id, chat_title):
+    return get_or_create(MessageStage, path=path, path_type=path_type, platform=platform, person=person,
+                         comment=comment, chat_id=chat_id, chat_title=chat_title)
