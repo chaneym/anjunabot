@@ -21,6 +21,10 @@ def lambda_handler(event=None):
             print(e)
             return {'statusCode': 200}
 
+    if parsers.not_in_whitelist(message):
+        print('Bot in unknown room.')
+        return {'statusCode': 200}
+
     path = None
     path_type = None
     platform = None

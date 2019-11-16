@@ -1,4 +1,7 @@
+import os
 import re
+
+WHITELIST_PATH = os.getenv('WHITELIST_PATH')
 
 
 def parse_message(message, platform):
@@ -53,4 +56,22 @@ def parse_url(message):
     text = message.replace(url, '')
     return url, text.strip()
 
+
+def not_in_whitelist(message):
+    whitelist = []
+    filename = os.path.join(
+        os.path.dirname(__file__), '', 'whitelist.txt')
+
+    with open(filename, 'r') as w_file:
+        for chat_id in w_file:
+            whitelist.append(chat_id.strip('\n'))
+
+    try:
+        chat_id = str(message['message']['chat']['id'])
+        if chat_id in whitelist:
+            return False
+        else:
+            return True
+    except:
+        return True
 
