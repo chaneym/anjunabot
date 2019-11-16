@@ -1,0 +1,27 @@
+{
+  "event_type": "Album",
+  "update_id": 111111111,
+  "message": {
+    "message_id": 55,
+    "from": {
+      "id": 987654321,
+      "is_bot": false,
+      "first_name": "Person"
+    },
+    "chat": {
+      "id": -1,
+      "title": "LocalTest",
+      "type": "group",
+      "all_members_are_administrators": true
+    },
+    "date": 1573878890,
+    "text": "https://open.spotify.com/album/519ALz8Fp7JBOJuu4j5RI7?si=x9KpLT2SRtO3rWC26h2S7Q",
+    "entities": [
+      {
+        "offset": 0,
+        "length": 79,
+        "type": "url"
+      }
+    ]
+  }
+}

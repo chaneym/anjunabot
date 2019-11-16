@@ -1,0 +1,21 @@
+{
+  "event_type": "Raw",
+  "update_id": 529807319,
+  "message": {
+    "message_id": 561,
+    "from": {
+      "id": 888122921,
+      "is_bot": false,
+      "first_name": "Dana",
+      "last_name": "Reinhart"
+    },
+    "chat": {
+      "id": -386722287,
+      "title": "DREAMSTATE 2K19",
+      "type": "group",
+      "all_members_are_administrators": true
+    },
+    "date": 1573872606,
+    "text": "also it looks like the host cancels a lot"
+  }
+}

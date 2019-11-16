@@ -18,40 +18,43 @@ def lambda_handler(event=None):
         try:
             message = app.current_request.json_body
         except Exception as e:
+            print(e)
             return {'statusCode': 200}
 
     path = None
     path_type = None
     platform = None
-    comment = None
+    text = None
     try:
-        person = message['message']['from']['first_name']
-        date_rec = message['message']['date']
+        first_name = message['message']['from']['first_name']
+        last_name = message['message']['from']['last_name'] if 'last_name' in message['message']['from'] else None
         chat_id = message['message']['chat']['id']
         chat_title = message['message']['chat']['title']
     except Exception as e:
+        print(e)
         return {'statusCode': 200}
 
     try:
         if "spotify" in message['message']['text']:
-            path, path_type, platform, comment = parsers.parse_message(message['message']['text'], 'spotify')
+            path, path_type, platform, text = parsers.parse_message(message['message']['text'], 'spotify')
         if "youtube" in message['message']['text']:
-            path, path_type, platform, comment = parsers.parse_message(message['message']['text'], 'youtube')
+            path, path_type, platform, text = parsers.parse_message(message['message']['text'], 'youtube')
         if "youtu.be" in message['message']['text']:
-            path, path_type, platform, comment = parsers.parse_message(message['message']['text'], 'youtube_short')
+            path, path_type, platform, text = parsers.parse_message(message['message']['text'], 'youtube_short')
     except Exception as e:
+        print(e)
         return {'statusCode': 200}
 
     if path:
         topic_message = {
-            "person": person,
-            "date_rec": date_rec,
             "path": path,
             "path_type": path_type,
-            "platform": platform,
-            "comment": comment,
+            "first_name": first_name,
+            "last_name": last_name,
+            "text": text,
             "chat_id": chat_id,
-            "chat_title": chat_title
+            "chat_title": chat_title,
+            "platform": platform
         }
         try:
             if os.getenv('AWS_REGION') is not None:  # check if local test or lambda invocation
@@ -62,6 +65,7 @@ def lambda_handler(event=None):
                 print(topic_message)
 
         except Exception as e:
+            print(e)
             return {'statusCode': 200}
 
     else:

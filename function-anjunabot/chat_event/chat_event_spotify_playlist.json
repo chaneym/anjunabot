@@ -1,0 +1,27 @@
+{
+  "event_type": "Playlist",
+  "update_id": 500429791,
+  "message": {
+    "message_id": 17,
+    "from": {
+      "id": 987654321,
+      "is_bot": false,
+      "first_name": "Person"
+    },
+    "chat": {
+      "id": -1,
+      "title": "LocalTest",
+      "type": "group",
+      "all_members_are_administrators": true
+    },
+    "date": 1573878901,
+    "text": "https://open.spotify.com/playlist/58dGJ3843z0bLV7oCoUE44?si=F6n_5ppsTKikBktWMx1arA",
+    "entities": [
+      {
+        "offset": 0,
+        "length": 82,
+        "type": "url"
+      }
+    ]
+  }
+}

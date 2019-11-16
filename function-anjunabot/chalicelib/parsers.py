@@ -2,7 +2,7 @@ import re
 
 
 def parse_message(message, platform):
-    url, comment = parse_url(message)
+    url, text = parse_url(message)
     if not url:
         return
 
@@ -12,30 +12,31 @@ def parse_message(message, platform):
             path_id = url_string[-1].split('?')[0]
             path_type = url_string[-2]
 
-            return path_id, path_type, "spotify", comment
+            return path_id, path_type, "spotify", text
         except Exception as e:
             return None
 
     elif platform == 'youtube':
-        url, comment = parse_url(message)
+        url, text = parse_url(message)
         if not url:
             return
 
         try:
-            url_string = url.split('/')
-            path_id = url_string[-1].split('=')[-1]
-            return path_id, "link", "youtube", comment
+            url_string = url.split('/')[-1]
+            path_id = url_string.split('=')[-1].split('?')[0]
+            return path_id, "link", "youtube", text
         except Exception as e:
             return None
 
     elif platform == 'youtube_short':
-        url, comment = parse_url(message)
+        url, text = parse_url(message)
         if not url:
             return
 
         try:
-            path_id = url.split('/')
-            return path_id, "link", "youtube", comment
+            url_string = url.split('/')[-1]
+            path_id = url_string.split('?')[0]
+            return path_id, "link", "youtube", text
         except Exception as e:
             return None
 
@@ -49,5 +50,7 @@ def parse_url(message):
         return None, None
 
     url = url[0]
-    comment = message.replace(url, '')
-    return url, comment.strip()
+    text = message.replace(url, '')
+    return url, text.strip()
+
+
