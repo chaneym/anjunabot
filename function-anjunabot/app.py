@@ -11,13 +11,17 @@ app = Chalice(app_name='anjunabot-{env}'.format(env=ENV_NAME))
 
 
 @app.route('/', methods=['POST'])
-def lambda_handler():
-    try:
-        message = app.current_request.json_body
-    except Exception as e:
-        return {'statusCode': 200}
+def lambda_handler(event=None):
+    if event:
+        message = event
+    else:
+        try:
+            message = app.current_request.json_body
+        except Exception as e:
+            return {'statusCode': 200}
 
-    track_id = None
+    path = None
+    path_type = None
     platform = None
     comment = None
     try:
@@ -30,29 +34,33 @@ def lambda_handler():
 
     try:
         if "spotify" in message['message']['text']:
-            track_id, comment, platform = parsers.parse_spotify(message['message']['text'])
+            path, path_type, platform, comment = parsers.parse_message(message['message']['text'], 'spotify')
         if "youtube" in message['message']['text']:
-            track_id, comment, platform = parsers.parse_youtube(message['message']['text'])
+            path, path_type, platform, comment = parsers.parse_message(message['message']['text'], 'youtube')
         if "youtu.be" in message['message']['text']:
-            track_id, comment, platform = parsers.parse_youtube_short(message['message']['text'])
+            path, path_type, platform, comment = parsers.parse_message(message['message']['text'], 'youtube_short')
     except Exception as e:
         return {'statusCode': 200}
 
-    if track_id:
+    if path:
         topic_message = {
             "person": person,
             "date_rec": date_rec,
-            "track_id": track_id,
+            "path": path,
+            "path_type": path_type,
             "platform": platform,
             "comment": comment,
             "chat_id": chat_id,
             "chat_title": chat_title
         }
         try:
-            sns = boto3.client('sns', region_name='us-west-2')
-            response = sns.publish(TopicArn=SNS_TOPIC,
-                                   Message=json.dumps(topic_message))
-            return {'statusCode': 200}
+            if os.getenv('AWS_REGION') is not None:  # check if local test or lambda invocation
+                sns = boto3.client('sns', region_name='us-west-2')
+                response = sns.publish(TopicArn=SNS_TOPIC, Message=json.dumps(topic_message))
+                return {'statusCode': 200}
+            else:
+                print(topic_message)
+
         except Exception as e:
             return {'statusCode': 200}
 

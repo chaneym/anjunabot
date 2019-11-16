@@ -1,41 +1,45 @@
 import re
 
 
-def parse_spotify(message):
+def parse_message(message, platform):
     url, comment = parse_url(message)
     if not url:
         return
 
-    try:
-        url_string = url.split('/')
-        track_id = url_string[-1].split('?')[0]
-        return track_id, comment, "spotify"
-    except Exception as e:
-        return None
+    if platform == 'spotify':
+        try:
+            url_string = url.split('/')
+            path_id = url_string[-1].split('?')[0]
+            path_type = url_string[-2]
 
+            return path_id, path_type, "spotify", comment
+        except Exception as e:
+            return None
 
-def parse_youtube(message):
-    url, comment = parse_url(message)
-    if not url:
-        return
+    elif platform == 'youtube':
+        url, comment = parse_url(message)
+        if not url:
+            return
 
-    try:
-        url_string = url.split('/')
-        track_id = url_string[-1].split('=')[-1]
-        return track_id, comment,  "youtube"
-    except Exception as e:
-        return None
+        try:
+            url_string = url.split('/')
+            path_id = url_string[-1].split('=')[-1]
+            return path_id, "link", "youtube", comment
+        except Exception as e:
+            return None
 
+    elif platform == 'youtube_short':
+        url, comment = parse_url(message)
+        if not url:
+            return
 
-def parse_youtube_short(message):
-    url, comment = parse_url(message)
-    if not url:
-        return
+        try:
+            path_id = url.split('/')
+            return path_id, "link", "youtube", comment
+        except Exception as e:
+            return None
 
-    try:
-        track_id = url.split('/')
-        return track_id, comment, "youtube"
-    except Exception as e:
+    else:
         return None
 
 
