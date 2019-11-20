@@ -1,10 +1,10 @@
-from sqlalchemy import Column, DateTime, ForeignKey, String, text as lit
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.dialects.mysql import INTEGER
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
-metadata = Base.metadata
+# metadata = Base.metadata
 
 
 '''
@@ -39,6 +39,8 @@ class Chat(Base):
     id = Column(INTEGER(11), primary_key=True)
     cid = Column(INTEGER(11))
     title = Column(String(128))
+
+    posts = relationship('Post', back_populates='chat')
     
 
 class Person(Base):
@@ -48,6 +50,8 @@ class Person(Base):
     user_id = Column(INTEGER(11))
     first_name = Column(String(64))
     last_name = Column(String(64))
+
+    posts = relationship('Post', back_populates='person')
     
 
 class Post(Base):
@@ -58,11 +62,10 @@ class Post(Base):
     path_id = Column(ForeignKey('path.id'), index=True)
     person_id = Column(ForeignKey('person.id'), index=True)
     text = Column(String(1024), nullable=False)
-    date_added = Column(DateTime, nullable=False)
 
-    chat = relationship('Chat')
-    path = relationship('Path')
-    person = relationship('Person')
+    chat = relationship('Chat', back_populates='posts')
+    path = relationship('Path', back_populates='posts')
+    person = relationship('Person', back_populates='posts')
 
 
 '''
@@ -79,7 +82,9 @@ class Album(Base):
     num_tracks = Column(INTEGER(11))
     path_id = Column(ForeignKey('path.id'), index=True)
     
-    path = relationship('Path')
+    path = relationship('Path', uselist=False, back_populates='album')
+    artists = relationship('Artist', secondary='album_artists', back_populates='albums')
+    tracks = relationship('Track', secondary='album_tracks', back_populates='albums')
 
 
 class AlbumTrack(Base):
@@ -89,9 +94,6 @@ class AlbumTrack(Base):
     album_id = Column(ForeignKey('album.id'), index=True)
     track_id = Column(ForeignKey('track.id'), index=True)
 
-    album = relationship('Album')
-    track = relationship('Track')
-
 
 class Artist(Base):
     __tablename__ = 'artist'
@@ -100,7 +102,10 @@ class Artist(Base):
     path_id = Column(ForeignKey('path.id'), index=True)
     name = Column(String(256))
 
-    path = relationship('Path')
+    path = relationship('Path', uselist=False, back_populates='artist')
+    albums = relationship('Album', secondary='album_artists', back_populates='artists')
+    tracks = relationship('Track', secondary='track_artists', back_populates='artists')
+    genres = relationship('Genre', secondary='artist_genres', back_populates='artists')
 
 
 class AlbumArtist(Base):
@@ -109,9 +114,6 @@ class AlbumArtist(Base):
     id = Column(INTEGER(11), primary_key=True)
     album_id = Column(ForeignKey('album.id'), index=True)
     artist_id = Column(ForeignKey('artist.id'), index=True)
-
-    artist = relationship('Artist')
-    album = relationship('Album')
 
 
 class ArtistGenre(Base):
@@ -128,6 +130,8 @@ class Genre(Base):
     id = Column(INTEGER(11), primary_key=True)
     name = Column(String)
 
+    artists = relationship('Artist', secondary='artist_genres', back_populates='genres')
+
 
 class Path(Base):
     __tablename__ = 'path'
@@ -136,6 +140,12 @@ class Path(Base):
     type = Column(String(48))
     uri = Column(String(512))
     platform = Column(String(45))
+
+    album = relationship('Album', uselist=False, back_populates='path')
+    artist = relationship('Artist', uselist=False, back_populates='path')
+    track = relationship('Track', uselist=False, back_populates='path')
+    playlist = relationship('Playlist', uselist=False, back_populates='path')
+    posts = relationship('Post', back_populates='path')
     
 
 class Playlist(Base):
@@ -145,7 +155,8 @@ class Playlist(Base):
     path_id = Column(ForeignKey('path.id'), index=True)
     title = Column(String(256))
 
-    path = relationship('Path')
+    path = relationship('Path', uselist=False, back_populates='playlist')
+    tracks = relationship('Track', secondary='playlist_tracks', back_populates='playlists')
 
 
 class PlaylistTrack(Base):
@@ -155,9 +166,6 @@ class PlaylistTrack(Base):
     playlist_id = Column(ForeignKey('playlist.id'), index=True)
     track_id = Column(ForeignKey('track.id'), index=True)
 
-    playlist = relationship('Playlist')
-    track = relationship('Track')
-
 
 class Track(Base):
     __tablename__ = 'track'
@@ -166,7 +174,10 @@ class Track(Base):
     path_id = Column(ForeignKey('path.id'), index=True)
     title = Column(String(256))
 
-    path = relationship('Path')
+    path = relationship('Path', back_populates='track')
+    albums = relationship('Album', secondary='album_tracks', back_populates='tracks')
+    artists = relationship('Artist', secondary='track_artists', back_populates='tracks')
+    playlists = relationship('Playlist', secondary='playlist_tracks', back_populates='tracks')
 
 
 class TrackArtist(Base):
@@ -176,5 +187,3 @@ class TrackArtist(Base):
     track_id = Column(ForeignKey('track.id'), index=True)
     artist_id = Column(ForeignKey('artist.id'), index=True)
 
-    artist = relationship('Artist')
-    track = relationship('Track')
