@@ -21,8 +21,9 @@ def lambda_handler(event=None):
             print(e)
             return {'statusCode': 200}
 
-    if parsers.not_in_whitelist(message):
-        print('Bot in unknown room.')
+    not_in_whitelist, chat_title = parsers.not_in_whitelist(message)
+    if not_in_whitelist:
+        print('Bot in unknown room: {}'.format(chat_title))
         return {'statusCode': 200}
 
     path = None
@@ -30,6 +31,7 @@ def lambda_handler(event=None):
     platform = None
     text = None
     try:
+        user_id = message['message']['from']['id']
         first_name = message['message']['from']['first_name']
         last_name = message['message']['from']['last_name'] if 'last_name' in message['message']['from'] else None
         chat_id = message['message']['chat']['id']
@@ -53,6 +55,7 @@ def lambda_handler(event=None):
         topic_message = {
             "path": path,
             "path_type": path_type,
+            "user_id": user_id,
             "first_name": first_name,
             "last_name": last_name,
             "text": text,

@@ -68,10 +68,11 @@ def not_in_whitelist(message):
 
     try:
         chat_id = str(message['message']['chat']['id'])
+        chat_title = str(message['message']['chat']['title'])
         if chat_id in whitelist:
-            return False
+            return False, chat_title
         else:
-            return True
+            return True, chat_title
     except:
         return True
 
