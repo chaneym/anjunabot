@@ -20,6 +20,7 @@ def get_message_row_by_id(session, row_id):
 
 
 def load_post(session, chat_dict, person_dict, path_dict, text):
+
     chat = load_dimension(session, Chat, **chat_dict)
     person = load_dimension(session, Person, **person_dict)
     path = load_dimension(session, Path, **path_dict)
@@ -30,20 +31,36 @@ def load_post(session, chat_dict, person_dict, path_dict, text):
     session.commit()
 
 
-def load_album(session, album_dict, path_dict, artist_dicts, track_dicts):
+def load_album(session, path_dict, media_json, message):
+    album_dict = {'title': media_json['name'], 'type': media_json['album_type'], 'num_tracks': media_json['total_tracks']}
+
     if model_exists(session, Album, **album_dict):
         return False
+
     path = load_dimension(session, Path, **path_dict)
     album_dict['path'] = path
 
     album = Album(**album_dict)
 
-    for track_dict in track_dicts:
+    # tracks with no artist associations
+    for track_json in media_json['tracks']['items']:
+        track_path_dict = {'type': 'track', 'uri': track_json['id'], 'platform': message.platform}
+        track_path = load_path(session, track_path_dict)
+        track_dict = {'title': track_json['name'], 'path': track_path}
         track = load_dimension(session, Track, **track_dict)
-        album.tracks.append(track)
+        for artist_json in track_json['artists']:
+            artist_path_dict = {'type': 'artist', 'uri': artist_json['id'], 'platform': message.platform}
+            artist_path = load_path(session, artist_path_dict)
+            artist_dict = {'name': artist_json['name'], 'path': artist_path}
+            artist = load_dimension(session, Artist, **artist_dict)
+            track.artists.append(artist)
 
-    for artist_dict in artist_dicts:
+    for artist_json in media_json['artists']:
+        artist_path_dict = {'type': 'artist', 'uri': artist_json['id'], 'platform': message.platform}
+        artist_path = load_path(session, artist_path_dict)
+        artist_dict = {'name': artist_json['name'], 'path': artist_path}
         artist = load_dimension(session, Artist, **artist_dict)
+
         album.artists.append(artist)
 
     session.add(album)
@@ -51,9 +68,16 @@ def load_album(session, album_dict, path_dict, artist_dicts, track_dicts):
     return True
 
 
-def load_artist(session, artist_dict, path_dict, genre_dicts):
+def load_artist(session, path_dict, media_json):
+    artist_dict = {'name': media_json['name']}
     if model_exists(session, Artist, **artist_dict):
         return False
+
+    genre_dicts = []
+    for genre_name in media_json['genres']:
+        genre_dict = {'name': genre_name}
+        genre_dicts.append(genre_dict)
+
     path = load_dimension(session, Path, **path_dict)
     artist_dict['path'] = path
 
@@ -68,29 +92,47 @@ def load_artist(session, artist_dict, path_dict, genre_dicts):
     return True
 
 
-def load_track(session, path_dict, track_dict, artist_dicts, album_dict):
+def load_track(session, path_dict, media_json, message):
+    track_dict = {'title': media_json['name']}
     if model_exists(session, Track, **track_dict):
         return False
 
     path = load_dimension(session, Path, **path_dict)
     track_dict['path'] = path
-
     track = Track(**track_dict)
 
-    for album_dict in album_dict:
-        album = load_dimension(session, Album, **album_dict)
-        track.albums.append(album)
-        for artist_dict in artist_dicts:
-            artist = load_dimension(session, Artist, **artist_dict)
-            album.artists(artist)
-            track.artists.append(artist)
+    album_path_dict = {'type': 'album', 'uri': media_json['album']['id'], 'platform': message.platform}
+    album_path = load_path(session, album_path_dict)
+    album_dict = {'path': album_path, 'title': media_json['album']['name'], 'type': media_json['album']['album_type'],
+                  'num_tracks': media_json['album']['total_tracks']}
+    album = load_dimension(session, Album, **album_dict)
+
+    # find album artist associations
+    for artist_json in media_json['album']['artists']:
+        artist_path_dict = {'type': 'artist', 'uri': artist_json['id'], 'platform': message.platform}
+        album_artist_path = load_path(session, artist_path_dict)
+        album_artist_dict = {'path': album_artist_path, 'name': artist_json['name']}
+        artist = load_dimension(session, Artist, **album_artist_dict)
+        album.artists.append(artist)
+
+    track.albums.append(album)
+
+    for artist_json in media_json['artists']:
+        artist_path_dict = {'type': 'artist', 'uri': artist_json['id'], 'platform': message.platform}
+        artist_path = load_path(session, artist_path_dict)
+        artist_dict = {'name': artist_json['name'], 'path': artist_path}
+        artist = load_dimension(session, Artist, **artist_dict)
+        track.artists.append(artist)
 
     session.add(track)
+    session.add(album)
     session.commit()
     return True
 
 
-def load_playlist(session, path_dict, playlist_dict, track_dicts):
+def load_playlist(session, path_dict, media_json, message):
+    playlist_dict = {'title': media_json['name']}
+
     if model_exists(session, Playlist, **playlist_dict):
         return False
 
@@ -99,8 +141,35 @@ def load_playlist(session, path_dict, playlist_dict, track_dicts):
 
     playlist = Playlist(**playlist_dict)
 
-    for track_dict in track_dicts:
+    for track_json in media_json['tracks']['items']:
+        track_json = track_json['track']
+        track_path_dict = {'type': 'track', 'uri': track_json['id'], 'platform': message.platform}
+        track_path = load_path(session, track_path_dict)
+        track_dict = {'title': track_json['name'], 'path': track_path}
         track = load_dimension(session, Track, **track_dict)
+
+        album_json = track_json['album']
+        album_path_dict = {'type': 'album', 'uri': album_json['id'], 'platform': message.platform}
+        album_path = load_path(session, album_path_dict)
+        album_dict = {'title': album_json['name'], 'path': album_path, 'type': album_json['album_type'], 'num_tracks': album_json['total_tracks']}
+        album = load_dimension(session, Album, **album_dict)
+        # artists on the album
+        for artist_json in album_json['artists']:
+            artist_path_dict = {'type': 'artist', 'uri': artist_json['id'], 'platform': message.platform}
+            artist_path = load_path(session, artist_path_dict)
+            artist_dict = {'name': artist_json['name'], 'path': artist_path}
+            artist = load_dimension(session, Artist, **artist_dict)
+            album.artists.append(artist)
+
+        track.albums.append(album)
+
+        for artist_json in track_json['artists']:
+            artist_path_dict = {'type': 'artist', 'uri': artist_json['id'], 'platform': message.platform}
+            artist_path = load_path(session, artist_path_dict)
+            artist_dict = {'name': artist_json['name'], 'path': artist_path}
+            artist = load_dimension(session, Artist, **artist_dict)
+            track.artists.append(artist)
+
         playlist.tracks.append(track)
 
     session.add(playlist)
@@ -128,3 +197,4 @@ def model_exists(session, model, **kwargs):
         return False
     else:
         return True
+
