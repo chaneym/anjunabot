@@ -10,6 +10,7 @@ class MessageStage(Base):
     id = Column(Integer, primary_key=True)
     path = Column(String)
     path_type = Column(String)
+    user_id = Column(Integer)
     first_name = Column(String)
     last_name = Column(String)
     text = Column(String)

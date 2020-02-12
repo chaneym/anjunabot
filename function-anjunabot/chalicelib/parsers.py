@@ -66,6 +66,8 @@ def not_in_whitelist(message):
         for chat_id in w_file:
             whitelist.append(chat_id.strip('\n'))
 
+    chat_id = 'Unknown ID'
+    chat_title = 'Unknown Title'
     try:
         chat_id = str(message['message']['chat']['id'])
         chat_title = str(message['message']['chat']['title'])
@@ -74,5 +76,5 @@ def not_in_whitelist(message):
         else:
             return True, chat_title
     except:
-        return True
+        return True, '{chat_id}:{chat_title}'.format(chat_id=chat_id, chat_title=chat_title)
 

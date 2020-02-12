@@ -9,17 +9,17 @@ write_engine = create_engine(DB_CON_STRING)
 WriteSession = sessionmaker(bind=write_engine)
 
 
-def get_or_create(model, **kwargs):
+def get_or_create_id(model, **kwargs):
     session = WriteSession()
     instance = session.query(model).filter_by(**kwargs).first()
     if instance:
-        return instance
+        return instance.id
     else:
         try:
             instance = model(**kwargs)
             session.add(instance)
             session.commit()
-            return instance
+            return instance.id
         except Exception as e:
             session.rollback()
         finally:
@@ -27,4 +27,4 @@ def get_or_create(model, **kwargs):
 
 
 def message_stage(args):
-    return get_or_create(MessageStage, **args)
+    return get_or_create_id(MessageStage, **args)
